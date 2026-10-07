@@ -30,10 +30,10 @@ ul{margin:.3em 0}
 :root{--bg:#fff;--fg:#000;--card:#fff;--bd:#999;--hl:#eee;--ac:#000;--ac2:#000}
 .bar{display:none}main{max-width:none;padding:0}.cover .m{color:transparent}
 .card{border-radius:0}h2{break-after:avoid}}
-</style></head><body><main>
-<h1>背影　課文與字音字形講義</h1>
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}.opt{min-width:5em}.opt.ok{background:#16a34a;color:#fff;border-color:#16a34a}.opt.no{background:#dc2626;color:#fff;border-color:#dc2626}.fb{min-height:1.4em;font-weight:700}a{text-decoration:none}</style></head><body><main>
+<h1>背影　課文與字音字形講義（互動版）</h1>
 <p>國文 1 上 第五課。先整理結構與寫作手法，再依形近字分類記字音字形，最後完成課文問答。</p>
-<div class="bar"><button id="cv">遮住釋義（自我測驗）</button><button onclick="print()">列印講義</button></div>
+<div class="bar"><button id="cv">遮住釋義（自我測驗）</button><a href="static.html"><button>講義版（列印）</button></a><a href="beiying-handout.docx"><button>下載 Word</button></a></div>
 
 <h2>一、結構分析</h2>
 <div class="card"><ul>
@@ -80,7 +80,7 @@ ul{margin:.3em 0}
 <tr><td>第三次</td><td><div class="q"></div></td><td>□虛　□實</td><td></td></tr>
 <tr><td>第四次</td><td><div class="q"></div></td><td>□虛　□實</td><td></td></tr></table></div></div>
 
-</main>
+<h2>六、互動小測驗</h2><div id="quiz"></div></main>
 <script>
 var D=`#弦 玄 眩 炫
 ㄒㄧㄢˊ|箭在「弦」上|緊繫在弓上的索、線，具有彈性（名）；比喻事情為形勢所逼，不得不做
@@ -215,4 +215,30 @@ document.getElementById("zx").innerHTML=h;
 var cv=document.getElementById("cv");
 cv.onclick=function(){var on=document.body.classList.toggle("cover");cv.classList.toggle("on",on);cv.textContent=on?"顯示全部釋義":"遮住釋義（自我測驗）";document.querySelectorAll(".m.show").forEach(function(e){e.classList.remove("show")})};
 document.addEventListener("click",function(e){if(e.target.classList.contains("m"))e.target.classList.toggle("show")});
+
+// ===== 互動測驗 =====
+var R=[];D.split("\n").forEach(function(l){if(l[0]=="#"){R.g=l.slice(1);return}var a=l.split("|");R.push({g:R.g,p:a[0],w:a[1],m:a[2]})});
+function sh(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function uniq(a){return a.filter(function(x,i){return a.indexOf(x)==i})}
+function pick(c,pool,n){var o=[c];sh(uniq(pool)).forEach(function(x){if(o.length<n&&x!=c&&o.indexOf(x)<0)o.push(x)});return sh(o)}
+function mk(){var qs=[];
+ R.forEach(function(r){
+  var w=r.w.split(/[、／]/)[0],mm=w.match(/「(.)」/);
+  var sameP=R.filter(function(x){return x.g==r.g}).map(function(x){return x.p}),allP=R.map(function(x){return x.p});
+  if(mm&&r.p.indexOf("（")<0){var o=pick(r.p,sameP.concat(allP),4);if(o.length>=3)qs.push({q:"詞語「"+w.replace(/[「」]/g,"")+"」中的「"+mm[1]+"」，讀音是？",o:o,a:r.p})}
+  var mean=r.m.split("；")[0],sameM=R.filter(function(x){return x.g==r.g}).map(function(x){return x.m.split("；")[0]}),allM=R.map(function(x){return x.m.split("；")[0]});
+  if(mean.length>1&&mean.length<26&&mm){var o2=pick(mean,sameM.concat(allM),4);if(o2.length>=3)qs.push({q:"詞語「"+w.replace(/[「」]/g,"")+"」（"+mm[1]+"字），釋義是？",o:o2,a:mean})}
+ });return sh(qs).slice(0,10)}
+var qz=document.getElementById("quiz"),sc=0,done=0;
+function render(){sc=0;done=0;var qs=mk(),h='<p id="sc">共 '+qs.length+' 題，點選答案即可立刻對答案。</p>';
+ qs.forEach(function(q,i){h+='<div class="card"><b>'+(i+1)+'. '+q.q+'</b><div class="opts">';
+  q.o.forEach(function(o){h+='<button class="opt" data-c="'+(o==q.a?1:0)+'">'+o+'</button>'});h+='</div><div class="fb"></div></div>'});
+ h+='<button id="again">換一批題目</button>';qz.innerHTML=h;
+ qz.querySelectorAll(".card").forEach(function(c,i){c.querySelectorAll(".opt").forEach(function(b){b.onclick=function(){
+  if(c.dataset.d)return;c.dataset.d=1;done++;var ok=b.dataset.c=="1";if(ok)sc++;
+  c.querySelectorAll(".opt").forEach(function(x){if(x.dataset.c=="1")x.classList.add("ok")});if(!ok)b.classList.add("no");
+  c.querySelector(".fb").textContent=ok?"答對了！":"答案是：「"+qs[i].a+"」";
+  document.getElementById("sc").textContent="已作答 "+done+"／"+qs.length+"，答對 "+sc+" 題"}})});
+ document.getElementById("again").onclick=render}
+render();
 </script></body></html>
